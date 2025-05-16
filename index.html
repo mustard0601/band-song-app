@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -48,6 +47,7 @@
     <input type="text" id="artist" placeholder="아티스트 이름" required>
     <textarea id="description" placeholder="설명"></textarea>
     <input type="text" id="link" placeholder="유튜브 링크">
+    <input type="text" id="session" placeholder="세션 (예: Guitar, Drums, Keyboard)" required>
     <button type="submit">등록하기</button>
 </form>
 
@@ -76,16 +76,18 @@
         const artist = document.getElementById('artist').value;
         const description = document.getElementById('description').value;
         const link = document.getElementById('link').value;
+        const session = document.getElementById('session').value.split(',').map(s => s.trim());
 
         const row = document.createElement('tr');
+        const sessionButtons = session.map(s => `<button onclick="applySession(this, '${s}')">${s}</button>`).join(' ');
+
         row.innerHTML = `
             <td>${title}</td>
             <td>${artist}</td>
             <td>${description}</td>
             <td><a href="${link}" target="_blank">링크</a></td>
-            <td>
-                <button onclick="applySession(this, 'Guitar')">Guitar</button>
-                <button onclick="applySession(this, 'Drums')">Drums</button>
+            <td>${sessionButtons}<br>
+                <input type='text' placeholder='이름 입력' class='nameInput'>
             </td>
         `;
         tableBody.appendChild(row);
@@ -95,12 +97,20 @@
 
     function applySession(button, session) {
         const td = button.parentElement;
-        const applied = td.querySelectorAll('span');
+        const nameInput = td.querySelector('.nameInput');
+        const name = nameInput.value.trim();
 
+        if (!name) {
+            alert('이름을 입력하세요.');
+            return;
+        }
+
+        const applied = td.querySelectorAll('span');
         if (applied.length < 2) {
             const span = document.createElement('span');
-            span.textContent = `${session} `;
+            span.textContent = `${session} - ${name} `;
             td.appendChild(span);
+            nameInput.value = '';
         } else {
             alert('해당 세션은 최대 2명만 지원할 수 있습니다.');
         }
