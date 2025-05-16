@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>밴드 선곡 앱</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 20px; }
+  h1, h2 { color: #333; }
+  input, textarea, select, button { padding: 6px; margin: 5px 0; width: 100%; max-width: 400px; }
+  button { cursor: pointer; background-color: #007bff; color: white; border: none; border-radius: 4px; }
+  button:hover { background-color: #0056b3; }
+  .song { border: 1px solid #ccc; padding: 10px; margin-bottom: 15px; border-radius: 6px; }
+  iframe { display: block; margin-top: 10px; max-width: 100%; height: 200px; }
+  table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+  th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+  th { background-color: #f2f2f2; }
+</style>
+</head>
+<body>
+
+<h1>밴드 선곡 앱</h1>
+
+<section id="addSongSection">
+  <h2>새 곡 등록</h2>
+  <form id="songForm">
+    <input type="text" id="songTitle" placeholder="곡 제목" required />
+    <textarea id="songDescription" placeholder="설명" rows="2"></textarea>
+    <input type="text" id="songLink" placeholder="유튜브 링크" required />
+    <button type="submit">곡 등록</button>
+  </form>
+</section>
+
+<section id="songsListSection">
+  <h2>등록된 곡 목록</h2>
+  <div id="songsContainer"></div>
+</section>
+
+<section id="overviewSection">
+  <h2>전체 지원 현황</h2>
+  <table id="overviewTable">
+    <thead>
+      <tr>
+        <th>곡 제목</th>
+        <th>설명</th>
+        <th>세션 지원 현황 (세션명: 지원자명1, 지원자명2)</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</section>
+
+<script>
+  // 데이터 저장 키
+  const SONGS_KEY = 'bandSongs';
+  const APPLICATIONS_KEY = 'bandApplications';
+
+  // 데이터 불러오기
+  function loadSongs() {
+    const songsJson = localStorage.getItem(SONGS_KEY);
+    return songsJson ? JSON.parse(songsJson) : [];
+  }
+
+  function saveSongs(songs) {
+    localStorage.setItem(SONGS_KEY, JSON.stringify(songs));
+  }
+
+  function loadApplications() {
+    const appsJson = localStorage.getItem(APPLICATIONS_KEY);
+    return appsJson ? JSON.parse(appsJson) : [];
+  }
+
+  function saveApplications(applications) {
+    localStorage.setItem(APPLICATIONS_KEY, JSON.stringify(applications));
+  }
+
+  // 유튜브 링크에서 ID 추출
+  function extractYouTubeId(url) {
+    const reg = /(?:https?:\/\/)?(?:www\.)?youtu(?:be\.com\/watch\?v=|\.be\/)([\w-]{11})/;
+    const match = url.match(reg);
+    return match ? match[1] : null;
+  }
+
+  // 새 곡 등록 처리
+  document.getElementById('songForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const title = document.getElementById('songTitle').value.trim();
+    const description = document.getElementById('songDescription').value.trim();
+    const link = document.getElementById('songLink').value.trim();
+
+    if (!title || !link) {
+      alert('곡 제목과 유튜브 링크는 필수입니다.');
+      return;
+    }
+    if (!extractYouTubeId(link)) {
+      alert('유효한 유튜브 링크를 입력하세요.');
+      return;
+    }
+
+    const songs = loadSongs();
+    const newSong = {
+      id: Date.now(),
+      title,
+      description,
+      link
+    };
+    songs.push(newSong);
+    saveSongs(songs);
+
+    e.target.reset();
+    renderSongs();
+    renderOverview();
+  });
+
+  // 세션 지원 처리
+  function applySession(songId, session, user) {
+    if (!session || !user) {
+      alert('세션명과 지원자명을 입력하세요.');
+      return false;
+    }
+
+    let applications = loadApplications();
+
+    // 이미 지원했는지 체크
+    if (applications.find(app => app.songId === songId && app.session === session && app.user === user)) {
+      alert('이미 지원한 세션입니다.');
+      return false;
+    }
+
+    // 세션별 지원자 수 제한 2명
+    const count = applications.filter(app => app.songId === songId && app.session === session).length;
+    if (count >= 2) {
+      alert(`${session} 세션은 이미 2명이 지원했습니다.`);
+      return false;
+    }
+
+    const order = Math.max(
+      0,
+      ...applications
+        .filter(app => app.songId === songId && app.session === session)
+        .map(app => app.order || 0)
+    ) + 1;
+
+    applications.push({ songId, session, user, order });
+    saveApplications(applications);
+
+    alert('지원 완료');
+    renderSongs();
+    renderOverview();
+    return true;
+  }
+
+  // 곡 목록 렌더링
+  function renderSongs() {
+    const container = document.getElementById('songsContainer');
+    container.innerHTML = '';
+    const songs = loadSongs();
+    const applications = loadApplications();
+
+    if (songs.length === 0) {
+      container.innerHTML = '<p>등록된 곡이 없습니다.</p>';
+      return;
+    }
+
+    songs.forEach(song => {
+      const songDiv = document.createElement('div');
+      songDiv.className = 'song';
+
+      // 지원 현황 정리 (세션별 지원자 리스트)
+      const sessionGroups = {};
+      applications
+        .filter(app => app.songId === song.id)
+        .forEach(app => {
+          if (!sessionGroups[app.session]) sessionGroups[app.session] = [];
+          sessionGroups[app.session].push(app.user);
+        });
+
+      let sessionHtml = '';
+      for (const session in sessionGroups) {
+        sessionHtml += `<div><strong>${session}</strong>: ${sessionGroups[session].join(', ')}</div>`;
+      }
+      if (!sessionHtml) sessionHtml = '<div>지원자가 없습니다.</div>';
+
+      const youtubeId = extractYouTubeId(song.link);
+      const iframeHtml = youtubeId
+        ? `<iframe src="https://www.youtube.com/embed/${youtubeId}" frameborder="0" allowfullscreen></iframe>`
+        : '';
+
+      songDiv.innerHTML = `
+        <h3>${song.title}</h3>
+        <p>${song.description}</p>
+        ${iframeHtml}
+        <h4>세션 지원 현황</h4>
+        <div>${sessionHtml}</div>
+        <h4>세션 지원하기</h4>
+        <form id="applyForm-${song.id}">
+          <input type="text" name="session" placeholder="세션명 (예: 드럼)" required />
+          <input type="text" name="user" placeholder="지원자명" required />
+          <button type="submit">지원하기</button>
+        </form>
+      `;
+
+      container.appendChild(songDiv);
+
+      // 폼 제출 이벤트 등록
+      const applyForm = document.getElementById(`applyForm-${song.id}`);
+      applyForm.addEventListener('submit', e => {
+        e.preventDefault();
+        const formData = new FormData(applyForm);
+        const session = formData.get('session').trim();
+        const user = formData.get('user').trim();
+        const success = applySession(song.id, session, user);
+        if (success) applyForm.reset();
+      });
+    });
+  }
+
+  // 전체 지원 현황 테이블 렌더링
+  function renderOverview() {
+    const tbody = document.querySelector('#overviewTable tbody');
+    tbody.innerHTML = '';
+    const songs = loadSongs();
+    const applications = loadApplications();
+
+    songs.forEach(song => {
+      const tr = document.createElement('tr');
+
+      // 세션 지원 현황 텍스트 (세션명: 지원자1, 지원자2)
+      const sessionGroups = {};
+      applications
+        .filter(app => app.songId === song.id)
+        .forEach(app => {
+          if (!sessionGroups[app.session]) sessionGroups[app.session] = [];
+          sessionGroups[app.session].push(app.user);
+        });
+
+      let supportText = '';
+      for (const session in sessionGroups) {
+        supportText += `${session}: ${sessionGroups[session].join(', ')}; `;
+      }
+      if (!supportText) supportText = '지원자가 없습니다.';
+
+      tr.innerHTML = `
+        <td>${song.title}</td>
+        <td>${song.description}</td>
+        <td>${supportText}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  // 초기 렌더링
+  renderSongs();
+  renderOverview();
+</script>
+
+</body>
+</html>
