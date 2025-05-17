@@ -9,7 +9,7 @@
             font-family: Arial, sans-serif;
             margin: 20px;
         }
-        input[type="text"], input[type="url"] {
+        input[type="text"], input[type="url"], input[type="number"] {
             width: 100%;
             padding: 8px;
             margin-bottom: 10px;
@@ -33,6 +33,10 @@
             margin-top: 5px;
             display: none;
         }
+        .session-title {
+            margin-top: 10px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -45,22 +49,31 @@
     <input type="url" id="link" placeholder="유튜브 링크">
     <input type="text" id="description" placeholder="비고">
     <input type="text" id="registrant" placeholder="등록자 이름" required>
+    <input type="number" id="generation" placeholder="등록자 기수" required>
 
     <div class="session-group">
-        <label><input type="radio" name="session" value="보컬"> 보컬</label>
-        <label><input type="radio" name="session" value="기타1"> 기타1</label>
-        <label><input type="radio" name="session" value="기타2"> 기타2</label>
-        <label><input type="radio" name="session" value="베이스"> 베이스</label>
-        <label><input type="radio" name="session" value="드럼"> 드럼</label>
-        <label><input type="radio" name="session" value="키보드"> 키보드</label>
+        <p class="session-title">전체 세션 선택 (다중 선택 가능):</p>
+        <label><input type="checkbox" name="session" value="보컬"> 보컬</label>
+        <label><input type="checkbox" name="session" value="기타1"> 기타1</label>
+        <label><input type="checkbox" name="session" value="기타2"> 기타2</label>
+        <label><input type="checkbox" name="session" value="베이스"> 베이스</label>
+        <label><input type="checkbox" name="session" value="드럼"> 드럼</label>
+        <label><input type="checkbox" name="session" value="키보드"> 키보드</label>
         <label>
-            <input type="radio" name="session" value="그 외 1" id="other1"> 그 외 1
+            <input type="checkbox" name="session" value="그 외 1" id="other1"> 그 외 1
             <input type="text" class="instrument-input" id="instrument1" placeholder="악기명">
         </label>
         <label>
-            <input type="radio" name="session" value="그 외 2" id="other2"> 그 외 2
+            <input type="checkbox" name="session" value="그 외 2" id="other2"> 그 외 2
             <input type="text" class="instrument-input" id="instrument2" placeholder="악기명">
         </label>
+    </div>
+
+    <div class="session-group">
+        <p class="session-title">본인 메인 세션 선택:</p>
+        <select id="mainSession" required>
+            <option value="" disabled selected>본인 세션을 선택하세요</option>
+        </select>
     </div>
 
     <button type="submit">곡 등록하기</button>
@@ -72,14 +85,46 @@
     const other2 = document.getElementById('other2');
     const instrument1 = document.getElementById('instrument1');
     const instrument2 = document.getElementById('instrument2');
-    
+    const mainSessionSelect = document.getElementById('mainSession');
+
     // "그 외" 체크 시 악기명 입력란 표시
     other1.addEventListener('change', () => {
         instrument1.style.display = other1.checked ? 'block' : 'none';
+        updateMainSessionOptions();
     });
     other2.addEventListener('change', () => {
         instrument2.style.display = other2.checked ? 'block' : 'none';
+        updateMainSessionOptions();
     });
+
+    // 입력 내용 변경 시 본인 세션 드롭다운 업데이트
+    instrument1.addEventListener('input', updateMainSessionOptions);
+    instrument2.addEventListener('input', updateMainSessionOptions);
+
+    // 체크박스 변경 시 본인 세션 선택 목록 업데이트
+    document.querySelectorAll('input[name="session"]').forEach(checkbox => {
+        checkbox.addEventListener('change', updateMainSessionOptions);
+    });
+
+    function updateMainSessionOptions() {
+        mainSessionSelect.innerHTML = '<option value="" disabled selected>본인 세션을 선택하세요</option>';
+        
+        document.querySelectorAll('input[name="session"]:checked').forEach(checkedBox => {
+            let value = checkedBox.value;
+
+            if (value === "그 외 1" && instrument1.value) {
+                value += ` (${instrument1.value})`;
+            }
+            if (value === "그 외 2" && instrument2.value) {
+                value += ` (${instrument2.value})`;
+            }
+
+            const option = document.createElement('option');
+            option.value = value;
+            option.text = value;
+            mainSessionSelect.appendChild(option);
+        });
+    }
 
     form.addEventListener('submit', (e) => {
         e.preventDefault();
@@ -89,10 +134,11 @@
         const link = document.getElementById('link').value;
         const description = document.getElementById('description').value;
         const registrant = document.getElementById('registrant').value;
+        const generation = document.getElementById('generation').value;
+        const mainSession = mainSessionSelect.value;
 
-        const session = document.querySelector('input[name="session"]:checked').value;
-        const instrument = (session === '그 외 1') ? instrument1.value : 
-                           (session === '그 외 2') ? instrument2.value : '';
+        const sessions = Array.from(document.querySelectorAll('input[name="session"]:checked'))
+                            .map(input => input.value);
 
         fetch('YOUR_WEB_APP_URL', {
             method: 'POST',
@@ -105,8 +151,9 @@
                 link,
                 description,
                 registrant,
-                session,
-                instrument
+                generation,
+                mainSession,
+                sessions
             }),
         })
         .then(response => response.json())
