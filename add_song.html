@@ -9,12 +9,12 @@
             font-family: Arial, sans-serif;
             margin: 20px;
         }
-        input, textarea {
-            display: block;
-            margin-bottom: 10px;
-            padding: 10px;
+        input[type="text"], input[type="url"] {
             width: 100%;
-            max-width: 500px;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
         }
         button {
             background-color: #4CAF50;
@@ -26,16 +26,12 @@
         button:hover {
             background-color: #45a049;
         }
-        .checkbox-group, .radio-group {
-            margin-bottom: 10px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
+        .session-group {
+            margin-bottom: 15px;
         }
-        .checkbox-item, .radio-item {
-            display: flex;
-            align-items: center;
-            gap: 5px;
+        .instrument-input {
+            margin-top: 5px;
+            display: none;
         }
     </style>
 </head>
@@ -44,78 +40,85 @@
 <h2>곡 등록하기</h2>
 
 <form id="songForm">
-    <input type="text" id="title" placeholder="곡 제목" required />
-    <input type="text" id="artist" placeholder="아티스트" required />
-    <input type="url" id="link" placeholder="유튜브 링크 (https:// 포함)" required />
-    <textarea id="description" placeholder="비고" rows="3"></textarea>
+    <input type="text" id="title" placeholder="곡 제목" required>
+    <input type="text" id="artist" placeholder="아티스트" required>
+    <input type="url" id="link" placeholder="유튜브 링크">
+    <input type="text" id="description" placeholder="비고">
+    <input type="text" id="registrant" placeholder="등록자 이름" required>
 
-    <div class="checkbox-group">
-        <div class="checkbox-item">
-            <input type="checkbox" value="Vocal" />
-            <label>보컬</label>
-        </div>
-        <div class="checkbox-item">
-            <input type="checkbox" value="Guitar1" />
-            <label>기타1</label>
-        </div>
-        <div class="checkbox-item">
-            <input type="checkbox" value="Guitar2" />
-            <label>기타2</label>
-        </div>
-        <div class="checkbox-item">
-            <input type="checkbox" value="Bass" />
-            <label>베이스</label>
-        </div>
-        <div class="checkbox-item">
-            <input type="checkbox" value="Drums" />
-            <label>드럼</label>
-        </div>
-        <div class="checkbox-item">
-            <input type="checkbox" value="Keyboard" />
-            <label>키보드</label>
-        </div>
-        <div class="checkbox-item">
-            <input type="checkbox" id="otherSession1" />
-            <label>그 외 1</label>
-            <input type="text" id="otherSessionInput1" placeholder="악기명 입력" disabled />
-        </div>
-        <div class="checkbox-item">
-            <input type="checkbox" id="otherSession2" />
-            <label>그 외 2</label>
-            <input type="text" id="otherSessionInput2" placeholder="악기명 입력" disabled />
-        </div>
+    <div class="session-group">
+        <label><input type="radio" name="session" value="보컬"> 보컬</label>
+        <label><input type="radio" name="session" value="기타1"> 기타1</label>
+        <label><input type="radio" name="session" value="기타2"> 기타2</label>
+        <label><input type="radio" name="session" value="베이스"> 베이스</label>
+        <label><input type="radio" name="session" value="드럼"> 드럼</label>
+        <label><input type="radio" name="session" value="키보드"> 키보드</label>
+        <label>
+            <input type="radio" name="session" value="그 외 1" id="other1"> 그 외 1
+            <input type="text" class="instrument-input" id="instrument1" placeholder="악기명">
+        </label>
+        <label>
+            <input type="radio" name="session" value="그 외 2" id="other2"> 그 외 2
+            <input type="text" class="instrument-input" id="instrument2" placeholder="악기명">
+        </label>
     </div>
 
-    <div class="radio-group">
-        <h4>본인 세션 선택</h4>
-        <div class="radio-item"><input type="radio" name="mySession" value="Vocal" /> <label>보컬</label></div>
-        <div class="radio-item"><input type="radio" name="mySession" value="Guitar1" /> <label>기타1</label></div>
-        <div class="radio-item"><input type="radio" name="mySession" value="Guitar2" /> <label>기타2</label></div>
-        <div class="radio-item"><input type="radio" name="mySession" value="Bass" /> <label>베이스</label></div>
-        <div class="radio-item"><input type="radio" name="mySession" value="Drums" /> <label>드럼</label></div>
-        <div class="radio-item"><input type="radio" name="mySession" value="Keyboard" /> <label>키보드</label></div>
-        <div class="radio-item"><input type="radio" name="mySession" value="Other1" /> <label>그 외 1</label></div>
-        <div class="radio-item"><input type="radio" name="mySession" value="Other2" /> <label>그 외 2</label></div>
-    </div>
-
-    <input type="text" id="userName" placeholder="이름 입력 (세션 선택 시 활성화)" disabled />
-    <button type="submit">등록하기</button>
+    <button type="submit">곡 등록하기</button>
 </form>
 
 <script>
-    document.getElementById('otherSession1').addEventListener('change', (e) => {
-        document.getElementById('otherSessionInput1').disabled = !e.target.checked;
+    const form = document.getElementById('songForm');
+    const other1 = document.getElementById('other1');
+    const other2 = document.getElementById('other2');
+    const instrument1 = document.getElementById('instrument1');
+    const instrument2 = document.getElementById('instrument2');
+    
+    // "그 외" 체크 시 악기명 입력란 표시
+    other1.addEventListener('change', () => {
+        instrument1.style.display = other1.checked ? 'block' : 'none';
+    });
+    other2.addEventListener('change', () => {
+        instrument2.style.display = other2.checked ? 'block' : 'none';
     });
 
-    document.getElementById('otherSession2').addEventListener('change', (e) => {
-        document.getElementById('otherSessionInput2').disabled = !e.target.checked;
-    });
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
 
-    const radioButtons = document.querySelectorAll('input[name="mySession"]');
-    radioButtons.forEach(button => {
-        button.addEventListener('change', (e) => {
-            document.getElementById('userName').disabled = false;
-        });
+        const title = document.getElementById('title').value;
+        const artist = document.getElementById('artist').value;
+        const link = document.getElementById('link').value;
+        const description = document.getElementById('description').value;
+        const registrant = document.getElementById('registrant').value;
+
+        const session = document.querySelector('input[name="session"]:checked').value;
+        const instrument = (session === '그 외 1') ? instrument1.value : 
+                           (session === '그 외 2') ? instrument2.value : '';
+
+        fetch('YOUR_WEB_APP_URL', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                title,
+                artist,
+                link,
+                description,
+                registrant,
+                session,
+                instrument
+            }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert('곡이 성공적으로 등록되었습니다.');
+                window.location.href = 'index.html';
+            } else {
+                alert('등록에 실패하였습니다.');
+            }
+        })
+        .catch(error => console.error('Error:', error));
     });
 </script>
 
