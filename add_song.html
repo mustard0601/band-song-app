@@ -1,48 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>곡 등록하기</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        input[type="text"], input[type="url"], input[type="number"] {
-            width: 100%;
-            padding: 8px;
-            margin-bottom: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-        button {
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        .session-group {
-            margin-bottom: 15px;
-        }
-        .instrument-input {
-            margin-top: 5px;
-            display: none;
-        }
-        .session-title {
-            margin-top: 10px;
-            font-weight: bold;
-        }
-    </style>
-</head>
-<body>
-
-<h2>곡 등록하기</h2>
-
 <form id="songForm">
     <input type="text" id="title" placeholder="곡 제목" required>
     <input type="text" id="artist" placeholder="아티스트" required>
@@ -87,82 +42,50 @@
     const instrument2 = document.getElementById('instrument2');
     const mainSessionSelect = document.getElementById('mainSession');
 
-    // "그 외" 체크 시 악기명 입력란 표시
     other1.addEventListener('change', () => {
         instrument1.style.display = other1.checked ? 'block' : 'none';
-        updateMainSessionOptions();
     });
+
     other2.addEventListener('change', () => {
         instrument2.style.display = other2.checked ? 'block' : 'none';
-        updateMainSessionOptions();
     });
-
-    // 입력 내용 변경 시 본인 세션 드롭다운 업데이트
-    instrument1.addEventListener('input', updateMainSessionOptions);
-    instrument2.addEventListener('input', updateMainSessionOptions);
-
-    // 체크박스 변경 시 본인 세션 선택 목록 업데이트
-    document.querySelectorAll('input[name="session"]').forEach(checkbox => {
-        checkbox.addEventListener('change', updateMainSessionOptions);
-    });
-
-    function updateMainSessionOptions() {
-        mainSessionSelect.innerHTML = '<option value="" disabled selected>본인 세션을 선택하세요</option>';
-        
-        document.querySelectorAll('input[name="session"]:checked').forEach(checkedBox => {
-            let value = checkedBox.value;
-
-            if (value === "그 외 1" && instrument1.value) {
-                value += ` (${instrument1.value})`;
-            }
-            if (value === "그 외 2" && instrument2.value) {
-                value += ` (${instrument2.value})`;
-            }
-
-            const option = document.createElement('option');
-            option.value = value;
-            option.text = value;
-            mainSessionSelect.appendChild(option);
-        });
-    }
 
     form.addEventListener('submit', (e) => {
         e.preventDefault();
 
-        const title = document.getElementById('title').value;
-        const artist = document.getElementById('artist').value;
-        const link = document.getElementById('link').value;
-        const description = document.getElementById('description').value;
-        const registrant = document.getElementById('registrant').value;
-        const generation = document.getElementById('generation').value;
-        const mainSession = mainSessionSelect.value;
+        const songData = {
+            title: document.getElementById('title').value,
+            artist: document.getElementById('artist').value,
+            link: document.getElementById('link').value,
+            description: document.getElementById('description').value,
+            registrant: document.getElementById('registrant').value,
+            generation: document.getElementById('generation').value,
+            mainSession: mainSessionSelect.value,
+            sessions: Array.from(document.querySelectorAll('input[name="session"]:checked'))
+                            .map(input => input.value),
+            other1: instrument1.value,
+            other2: instrument2.value
+        };
 
-        const sessions = Array.from(document.querySelectorAll('input[name="session"]:checked'))
-                            .map(input => input.value);
-
-fetch('https://script.google.com/macros/s/AKfycbz9uA8BO_xFHFKrWWLSFVgtPbG5lQltmVO_H3yCjELY_O6AjNvBwxmsVI-w6PKPKsdQHg/exec', {
-  method: 'POST',
-  mode: 'cors',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify(songData)
-})
-.then(response => response.json())
-.then(data => {
-  if (data.status === 'success') {
-    alert('곡 등록 성공');
-    window.location.href = 'index.html';
-  } else {
-    alert('등록 실패: ' + data.message);
-  }
-})
-.catch(error => {
-  alert('네트워크 오류 또는 서버 오류 발생');
-  console.error(error);
-});
+        fetch('https://script.google.com/macros/s/AKfycbz9uA8BO_xFHFKrWWLSFVgtPbG5lQltmVO_H3yCjELY_O6AjNvBwxmsVI-w6PKPKsdQHg/exec', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(songData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert('곡 등록 성공');
+                window.location.href = 'index.html';
+            } else {
+                alert('등록 실패: ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('네트워크 오류 또는 서버 오류 발생');
+            console.error(error);
+        });
     });
 </script>
-
-</body>
-</html>
