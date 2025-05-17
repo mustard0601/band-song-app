@@ -1,5 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -46,9 +45,7 @@
         }
     </style>
 </head>
-<body>
-
-<h2>등록된 곡 목록</h2>
+<body><h2>등록된 곡 목록</h2>
 <button onclick="window.location.href='add_song.html'">새로운 곡 등록하기</button>
 <table id="songTable">
     <thead>
@@ -58,17 +55,22 @@
             <th>유튜브 링크</th>
             <th>세션 지원</th>
             <th>비고</th>
+            <th>등록자</th>
             <th>관리</th>
         </tr>
     </thead>
     <tbody>
     </tbody>
-</table>
-
-<script>
+</table><script>
     const tableBody = document.querySelector('#songTable tbody');
 
-    function addSongToTable({ title, artist, description, link, session }, index) {
+    // LocalStorage에서 불러와서 테이블에 추가
+    const songs = JSON.parse(localStorage.getItem('songs')) || [];
+    songs.forEach((song, index) => {
+        addSongToTable(song, index);
+    });
+
+    function addSongToTable({ title, artist, description, link, session = [], userName }, index) {
         const row = document.createElement('tr');
         const sessionButtons = session.map(s => `<button class='session-button'>${s}</button>`).join(' ');
 
@@ -78,12 +80,11 @@
             <td><a href="${link}" target="_blank">링크</a></td>
             <td style="display: flex; gap: 5px;">${sessionButtons}</td>
             <td>${description}</td>
-            <td><button onclick="editSong(${index})">수정</button></td>
+            <td>${userName || '미기입'}</td>
+            <td><button onclick="window.location.href='edit_song.html?index=${index}'">수정</button></td>
         `;
 
         tableBody.prepend(row);
     }
-</script>
-
-</body>
+</script></body>
 </html>
