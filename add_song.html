@@ -140,34 +140,26 @@
         const sessions = Array.from(document.querySelectorAll('input[name="session"]:checked'))
                             .map(input => input.value);
 
-        fetch('https://script.google.com/macros/s/AKfycbwcXLbVY9y5sKIjoyXCnSqTSKmmwedNhgOuQQe0ijZdCXBTdpBbre-oHQI3w5Oz36RMZw/exec', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                title,
-                artist,
-                link,
-                description,
-                registrant,
-                generation,
-                mainSession,
-                sessions
-            }),
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                alert('곡이 성공적으로 등록되었습니다.');
-                window.location.href = 'index.html';
-            } else {
-                alert('등록에 실패하였습니다.');
-            }
-        })
-        .catch(error => {
-    console.error('Error:', error);
-    alert('곡 등록 중 오류가 발생했습니다. 콘솔을 확인하세요.');
+fetch('https://script.google.com/macros/s/AKfycbz9uA8BO_xFHFKrWWLSFVgtPbG5lQltmVO_H3yCjELY_O6AjNvBwxmsVI-w6PKPKsdQHg/exec', {
+  method: 'POST',
+  mode: 'cors',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify(songData)
+})
+.then(response => response.json())
+.then(data => {
+  if (data.status === 'success') {
+    alert('곡 등록 성공');
+    window.location.href = 'index.html';
+  } else {
+    alert('등록 실패: ' + data.message);
+  }
+})
+.catch(error => {
+  alert('네트워크 오류 또는 서버 오류 발생');
+  console.error(error);
 });
     });
 </script>
