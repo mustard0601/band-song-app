@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,17 +8,6 @@
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
-        }
-        button.session-button {
-            margin: 2px;
-            padding: 5px 10px;
-            background-color: #6c757d;
-            color: white;
-            border: none;
-            border-radius: 5px;
-        }
-        button.session-button:hover {
-            background-color: #5a6268;
         }
         button {
             background-color: #4CAF50;
@@ -38,14 +28,16 @@
         th, td {
             border: 1px solid black;
             padding: 8px;
-            text-align: left;
+            text-align: center;
         }
         th {
             background-color: #f2f2f2;
         }
     </style>
 </head>
-<body><h2>등록된 곡 목록</h2>
+<body>
+
+<h2>등록된 곡 목록</h2>
 <button onclick="window.location.href='add_song.html'">새로운 곡 등록하기</button>
 <table id="songTable">
     <thead>
@@ -53,38 +45,83 @@
             <th>곡 제목</th>
             <th>아티스트</th>
             <th>유튜브 링크</th>
-            <th>세션 지원</th>
             <th>비고</th>
             <th>등록자</th>
-            <th>관리</th>
+            <th>보컬</th>
+            <th>기타1</th>
+            <th>기타2</th>
+            <th>베이스</th>
+            <th>드럼</th>
+            <th>키보드</th>
+            <th>그 외</th>
         </tr>
     </thead>
     <tbody>
     </tbody>
-</table><script>
+</table>
+
+<script>
     const tableBody = document.querySelector('#songTable tbody');
+    const SHEET_URL = "YOUR_WEB_APP_URL"; // 배포된 Apps Script URL
 
-    // LocalStorage에서 불러와서 테이블에 추가
-    const songs = JSON.parse(localStorage.getItem('songs')) || [];
-    songs.forEach((song, index) => {
-        addSongToTable(song, index);
-    });
+    // Google Sheets에서 데이터 불러오기
+    fetch(SHEET_URL)
+        .then(response => response.json())
+        .then(data => {
+            data.forEach(song => {
+                addSongToTable(song);
+            });
+        })
+        .catch(error => console.error('Error:', error));
 
-    function addSongToTable({ title, artist, description, link, session = [], userName }, index) {
+    function addSongToTable(song) {
         const row = document.createElement('tr');
-        const sessionButtons = session.map(s => `<button class='session-button'>${s}</button>`).join(' ');
+        
+        const sessions = ["보컬", "기타1", "기타2", "베이스", "드럼", "키보드", "그 외"];
+        const sessionColumns = sessions.map(session => {
+            return `<td><button onclick="supportSession('${session}', '${song['곡 제목']}')">${song[session] || '지원하기'}</button></td>`;
+        }).join('');
 
         row.innerHTML = `
-            <td>${title}</td>
-            <td>${artist}</td>
-            <td><a href="${link}" target="_blank">링크</a></td>
-            <td style="display: flex; gap: 5px;">${sessionButtons}</td>
-            <td>${description}</td>
-            <td>${userName || '미기입'}</td>
-            <td><button onclick="window.location.href='edit_song.html?index=${index}'">수정</button></td>
+            <td>${song["곡 제목"]}</td>
+            <td>${song["아티스트"]}</td>
+            <td><a href="${song["유튜브 링크"]}" target="_blank">링크</a></td>
+            <td>${song["비고"]}</td>
+            <td>${song["등록자"]}</td>
+            ${sessionColumns}
         `;
 
         tableBody.prepend(row);
     }
-</script></body>
+
+    // 세션 지원하기
+    function supportSession(session, songTitle) {
+        const userName = prompt(`"${session}" 세션에 지원할 이름을 입력하세요:`);
+        if (!userName) return;
+
+        fetch(SHEET_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                songTitle,
+                session,
+                userName
+            }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert('세션 지원이 완료되었습니다.');
+                location.reload(); // 페이지 새로고침하여 반영
+            } else {
+                alert('지원에 실패했습니다.');
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+</script>
+
+</body>
 </html>
