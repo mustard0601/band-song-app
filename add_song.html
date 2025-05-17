@@ -140,7 +140,7 @@
         const sessions = Array.from(document.querySelectorAll('input[name="session"]:checked'))
                             .map(input => input.value);
 
-        fetch('YOUR_WEB_APP_URL', {
+        fetch('https://script.google.com/macros/s/AKfycbwcXLbVY9y5sKIjoyXCnSqTSKmmwedNhgOuQQe0ijZdCXBTdpBbre-oHQI3w5Oz36RMZw/exec', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
