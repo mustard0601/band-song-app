@@ -28,6 +28,14 @@
         }
         .checkbox-group, .radio-group {
             margin-bottom: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .checkbox-item, .radio-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
     </style>
 </head>
@@ -42,43 +50,59 @@
     <textarea id="description" placeholder="비고" rows="3"></textarea>
 
     <div class="checkbox-group">
-        <label><input type="checkbox" value="Vocal" /> 보컬</label>
-        <label><input type="checkbox" value="Guitar1" /> 기타1</label>
-        <label><input type="checkbox" value="Guitar2" /> 기타2</label>
-        <label><input type="checkbox" value="Bass" /> 베이스</label>
-        <label><input type="checkbox" value="Drums" /> 드럼</label>
-        <label><input type="checkbox" value="Keyboard" /> 키보드</label>
-        <label>
-            <input type="checkbox" id="otherSession1" /> 그 외 1
+        <div class="checkbox-item">
+            <input type="checkbox" value="Vocal" />
+            <label>보컬</label>
+        </div>
+        <div class="checkbox-item">
+            <input type="checkbox" value="Guitar1" />
+            <label>기타1</label>
+        </div>
+        <div class="checkbox-item">
+            <input type="checkbox" value="Guitar2" />
+            <label>기타2</label>
+        </div>
+        <div class="checkbox-item">
+            <input type="checkbox" value="Bass" />
+            <label>베이스</label>
+        </div>
+        <div class="checkbox-item">
+            <input type="checkbox" value="Drums" />
+            <label>드럼</label>
+        </div>
+        <div class="checkbox-item">
+            <input type="checkbox" value="Keyboard" />
+            <label>키보드</label>
+        </div>
+        <div class="checkbox-item">
+            <input type="checkbox" id="otherSession1" />
+            <label>그 외 1</label>
             <input type="text" id="otherSessionInput1" placeholder="악기명 입력" disabled />
-        </label>
-        <label>
-            <input type="checkbox" id="otherSession2" /> 그 외 2
+        </div>
+        <div class="checkbox-item">
+            <input type="checkbox" id="otherSession2" />
+            <label>그 외 2</label>
             <input type="text" id="otherSessionInput2" placeholder="악기명 입력" disabled />
-        </label>
+        </div>
     </div>
-
-    <input type="text" id="userName" placeholder="이름 입력" required />
 
     <div class="radio-group">
         <h4>본인 세션 선택</h4>
-        <label><input type="radio" name="mySession" value="Vocal" /> 보컬</label>
-        <label><input type="radio" name="mySession" value="Guitar1" /> 기타1</label>
-        <label><input type="radio" name="mySession" value="Guitar2" /> 기타2</label>
-        <label><input type="radio" name="mySession" value="Bass" /> 베이스</label>
-        <label><input type="radio" name="mySession" value="Drums" /> 드럼</label>
-        <label><input type="radio" name="mySession" value="Keyboard" /> 키보드</label>
-        <label><input type="radio" name="mySession" value="Other1" /> 그 외 1</label>
-        <label><input type="radio" name="mySession" value="Other2" /> 그 외 2</label>
+        <div class="radio-item"><input type="radio" name="mySession" value="Vocal" /> <label>보컬</label></div>
+        <div class="radio-item"><input type="radio" name="mySession" value="Guitar1" /> <label>기타1</label></div>
+        <div class="radio-item"><input type="radio" name="mySession" value="Guitar2" /> <label>기타2</label></div>
+        <div class="radio-item"><input type="radio" name="mySession" value="Bass" /> <label>베이스</label></div>
+        <div class="radio-item"><input type="radio" name="mySession" value="Drums" /> <label>드럼</label></div>
+        <div class="radio-item"><input type="radio" name="mySession" value="Keyboard" /> <label>키보드</label></div>
+        <div class="radio-item"><input type="radio" name="mySession" value="Other1" /> <label>그 외 1</label></div>
+        <div class="radio-item"><input type="radio" name="mySession" value="Other2" /> <label>그 외 2</label></div>
     </div>
 
+    <input type="text" id="userName" placeholder="이름 입력 (세션 선택 시 활성화)" disabled />
     <button type="submit">등록하기</button>
 </form>
 
 <script>
-    const API_URL = "YOUR_GOOGLE_SCRIPT_DEPLOYMENT_URL";
-
-    // '그 외' 체크박스 활성화 시 입력 가능
     document.getElementById('otherSession1').addEventListener('change', (e) => {
         document.getElementById('otherSessionInput1').disabled = !e.target.checked;
     });
@@ -87,66 +111,11 @@
         document.getElementById('otherSessionInput2').disabled = !e.target.checked;
     });
 
-    document.getElementById('songForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-
-        // 체크된 세션 수집
-        const sessions = Array.from(document.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
-
-        // "그 외" 세션명 추가
-        const other1 = document.getElementById('otherSessionInput1').value;
-        if (other1) sessions.push(other1);
-
-        const other2 = document.getElementById('otherSessionInput2').value;
-        if (other2) sessions.push(other2);
-
-        // 본인 세션 선택 값 가져오기
-        const mySession = document.querySelector('input[name="mySession"]:checked')?.value || "미지정";
-        const userName = document.getElementById('userName').value;
-
-        const song = {
-            title: document.getElementById('title').value,
-            artist: document.getElementById('artist').value,
-            link: document.getElementById('link').value,
-            description: document.getElementById('description').value,
-            session: sessions,
-            userName: userName,
-            mySession: mySession
-        };
-
-        // 1️⃣ LocalStorage에 저장
-        const songs = JSON.parse(localStorage.getItem('songs')) || [];
-        songs.push(song);
-        localStorage.setItem('songs', JSON.stringify(songs));
-
-        // 2️⃣ Google Sheet에 추가
-        try {
-            const response = await fetch(API_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    action: 'add',
-                    title: song.title,
-                    artist: song.artist,
-                    link: song.link,
-                    session: song.session,
-                    description: song.description,
-                    userName: song.userName,
-                    mySession: song.mySession
-                })
-            });
-
-            if (!response.ok) {
-                alert('구글 시트 업데이트에 실패했습니다.');
-            } else {
-                alert('곡이 성공적으로 등록되었습니다.');
-                window.location.href = "index.html";
-            }
-        } catch (error) {
-            console.error('Error:', error);
-        }
+    const radioButtons = document.querySelectorAll('input[name="mySession"]');
+    radioButtons.forEach(button => {
+        button.addEventListener('change', (e) => {
+            document.getElementById('userName').disabled = false;
+        });
     });
 </script>
 
