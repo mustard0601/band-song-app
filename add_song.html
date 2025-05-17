@@ -53,6 +53,7 @@
     form.addEventListener('submit', (e) => {
         e.preventDefault();
 
+        // ✅ songData 객체를 올바르게 정의합니다.
         const songData = {
             title: document.getElementById('title').value,
             artist: document.getElementById('artist').value,
@@ -67,6 +68,9 @@
             other2: instrument2.value
         };
 
+        console.log("전송할 데이터:", songData); // 디버그를 위해 추가
+
+        // ✅ fetch 요청
         fetch('https://script.google.com/macros/s/AKfycbz9uA8BO_xFHFKrWWLSFVgtPbG5lQltmVO_H3yCjELY_O6AjNvBwxmsVI-w6PKPKsdQHg/exec', {
             method: 'POST',
             headers: {
@@ -89,3 +93,4 @@
         });
     });
 </script>
+
