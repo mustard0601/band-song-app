@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -79,44 +80,63 @@
 </form>
 
 <script>
-  const form = document.getElementById('songForm');
+    const form = document.getElementById('songForm');
+    const other1 = document.getElementById('other1');
+    const other2 = document.getElementById('other2');
+    const instrument1 = document.getElementById('instrument1');
+    const instrument2 = document.getElementById('instrument2');
+    const mainSessionSelect = document.getElementById('mainSession');
 
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
+    other1.addEventListener('change', () => {
+        instrument1.style.display = other1.checked ? 'block' : 'none';
+    });
 
-    const songData = {
-        title: document.getElementById('title').value,
-        artist: document.getElementById('artist').value,
-        link: document.getElementById('link').value,
-        description: document.getElementById('description').value,
-        registrant: document.getElementById('registrant').value,
-        generation: document.getElementById('generation').value,
-        mainSession: document.getElementById('mainSession').value,
-        sessions: JSON.stringify(Array.from(document.querySelectorAll('input[name="session"]:checked'))
-                        .map(input => input.value)),
-        other1: document.getElementById('instrument1').value,
-        other2: document.getElementById('instrument2').value
-    };
+    other2.addEventListener('change', () => {
+        instrument2.style.display = other2.checked ? 'block' : 'none';
+    });
 
-    const baseUrl = 'https://script.google.com/macros/s/AKfycbxh5jbjWVDMAneIxAa2l0e7ujlI_fJjTVX7zNKrG4PlK24TydWk53FPTVEIDFnfWLFVOA/exec';
-    const queryString = new URLSearchParams({
-      ...songData,
-      callback: 'handleResponse'
-    }).toString();
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
 
-    const script = document.createElement('script');
-    script.src = `${baseUrl}?${queryString}`;
-    document.body.appendChild(script);
-  });
+        // ✅ songData 객체 정의
+        const songData = {
+            title: document.getElementById('title').value,
+            artist: document.getElementById('artist').value,
+            link: document.getElementById('link').value,
+            description: document.getElementById('description').value,
+            registrant: document.getElementById('registrant').value,
+            generation: document.getElementById('generation').value,
+            mainSessionName: mainSessionSelect.value,
+            sessions: Array.from(document.querySelectorAll('input[name="session"]:checked'))
+                            .map(input => input.value),
+            other1: instrument1.value,
+            other2: instrument2.value
+        };
 
-  function handleResponse(data) {
-    if (data.status === 'success') {
-      alert('곡 등록 성공');
-      window.location.href = 'index.html';
-    } else {
-      alert('등록 실패');
-    }
-  }
+        console.log("전송할 데이터:", songData);
+
+        // ✅ Vercel에 배포된 Proxy URL로 변경
+        fetch('https://https://google-script-proxy-eight.vercel.app//api', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(songData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert('곡 등록 성공');
+                window.location.href = 'index.html';
+            } else {
+                alert('등록 실패: ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('네트워크 오류 또는 서버 오류 발생');
+            console.error(error);
+        });
+    });
 </script>
 
 </body>
