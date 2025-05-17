@@ -85,14 +85,47 @@
     const other2 = document.getElementById('other2');
     const instrument1 = document.getElementById('instrument1');
     const instrument2 = document.getElementById('instrument2');
+    const mainSessionSelect = document.getElementById('mainSession');
 
+    // "그 외" 체크 시 악기명 입력란 표시
     other1.addEventListener('change', () => {
         instrument1.style.display = other1.checked ? 'block' : 'none';
+        updateMainSessionOptions();
     });
-
     other2.addEventListener('change', () => {
         instrument2.style.display = other2.checked ? 'block' : 'none';
+        updateMainSessionOptions();
     });
+
+    // 입력 내용 변경 시 본인 세션 드롭다운 업데이트
+    instrument1.addEventListener('input', updateMainSessionOptions);
+    instrument2.addEventListener('input', updateMainSessionOptions);
+
+    // 체크박스 변경 시 본인 세션 선택 목록 업데이트
+    document.querySelectorAll('input[name="session"]').forEach(checkbox => {
+        checkbox.addEventListener('change', updateMainSessionOptions);
+    });
+
+    // ✅ 드롭다운 옵션 업데이트 함수
+    function updateMainSessionOptions() {
+        mainSessionSelect.innerHTML = '<option value="" disabled selected>본인 세션을 선택하세요</option>';
+        
+        document.querySelectorAll('input[name="session"]:checked').forEach(checkedBox => {
+            let value = checkedBox.value;
+
+            if (value === "그 외 1" && instrument1.value) {
+                value += ` (${instrument1.value})`;
+            }
+            if (value === "그 외 2" && instrument2.value) {
+                value += ` (${instrument2.value})`;
+            }
+
+            const option = document.createElement('option');
+            option.value = value;
+            option.text = value;
+            mainSessionSelect.appendChild(option);
+        });
+    }
 
     form.addEventListener('submit', (e) => {
         e.preventDefault();
@@ -104,16 +137,14 @@
             description: document.getElementById('description').value,
             registrant: document.getElementById('registrant').value,
             generation: document.getElementById('generation').value,
-            mainSession: document.getElementById('mainSession').value,
-            sessions: Array.from(document.querySelectorAll('input[name="session"]:checked'))
-                            .map(input => input.value),
+            mainSession: mainSessionSelect.value,
+            sessions: Array.from(document.querySelectorAll('input[name="session"]:checked')).map(input => input.value),
             other1: instrument1.value,
             other2: instrument2.value
         };
 
         console.log("전송할 데이터:", songData);
 
-        // 🔥 Vercel Proxy URL로 요청
         fetch('https://google-script-proxy-eight.vercel.app/api/google-script', {
             method: 'POST',
             headers: {
