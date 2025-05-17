@@ -1,0 +1,88 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Band Session App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        button.session-button {
+            margin: 2px;
+            padding: 5px 10px;
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        button.session-button:hover {
+            background-color: #5a6268;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+
+<h2>등록된 곡 목록</h2>
+<button onclick="window.location.href='add_song.html'">새로운 곡 등록하기</button>
+<table id="songTable">
+    <thead>
+        <tr>
+            <th>곡 제목</th>
+            <th>아티스트</th>
+            <th>유튜브 링크</th>
+            <th>세션 지원</th>
+            <th>비고</th>
+            <th>관리</th>
+        </tr>
+    </thead>
+    <tbody>
+    </tbody>
+</table>
+
+<script>
+    const tableBody = document.querySelector('#songTable tbody');
+
+    function addSongToTable({ title, artist, description, link, session }, index) {
+        const row = document.createElement('tr');
+        const sessionButtons = session.map(s => `<button class='session-button'>${s}</button>`).join(' ');
+
+        row.innerHTML = `
+            <td>${title}</td>
+            <td>${artist}</td>
+            <td><a href="${link}" target="_blank">링크</a></td>
+            <td style="display: flex; gap: 5px;">${sessionButtons}</td>
+            <td>${description}</td>
+            <td><button onclick="editSong(${index})">수정</button></td>
+        `;
+
+        tableBody.prepend(row);
+    }
+</script>
+
+</body>
+</html>
