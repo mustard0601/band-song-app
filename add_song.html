@@ -26,6 +26,9 @@
         button:hover {
             background-color: #45a049;
         }
+        .checkbox-group, .radio-group {
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
@@ -38,21 +41,77 @@
     <input type="url" id="link" placeholder="유튜브 링크 (https:// 포함)" required />
     <textarea id="description" placeholder="비고" rows="3"></textarea>
 
+    <div class="checkbox-group">
+        <label><input type="checkbox" value="Vocal" /> 보컬</label>
+        <label><input type="checkbox" value="Guitar1" /> 기타1</label>
+        <label><input type="checkbox" value="Guitar2" /> 기타2</label>
+        <label><input type="checkbox" value="Bass" /> 베이스</label>
+        <label><input type="checkbox" value="Drums" /> 드럼</label>
+        <label><input type="checkbox" value="Keyboard" /> 키보드</label>
+        <label>
+            <input type="checkbox" id="otherSession1" /> 그 외 1
+            <input type="text" id="otherSessionInput1" placeholder="악기명 입력" disabled />
+        </label>
+        <label>
+            <input type="checkbox" id="otherSession2" /> 그 외 2
+            <input type="text" id="otherSessionInput2" placeholder="악기명 입력" disabled />
+        </label>
+    </div>
+
+    <input type="text" id="userName" placeholder="이름 입력" required />
+
+    <div class="radio-group">
+        <h4>본인 세션 선택</h4>
+        <label><input type="radio" name="mySession" value="Vocal" /> 보컬</label>
+        <label><input type="radio" name="mySession" value="Guitar1" /> 기타1</label>
+        <label><input type="radio" name="mySession" value="Guitar2" /> 기타2</label>
+        <label><input type="radio" name="mySession" value="Bass" /> 베이스</label>
+        <label><input type="radio" name="mySession" value="Drums" /> 드럼</label>
+        <label><input type="radio" name="mySession" value="Keyboard" /> 키보드</label>
+        <label><input type="radio" name="mySession" value="Other1" /> 그 외 1</label>
+        <label><input type="radio" name="mySession" value="Other2" /> 그 외 2</label>
+    </div>
+
     <button type="submit">등록하기</button>
 </form>
 
 <script>
     const API_URL = "YOUR_GOOGLE_SCRIPT_DEPLOYMENT_URL";
 
+    // '그 외' 체크박스 활성화 시 입력 가능
+    document.getElementById('otherSession1').addEventListener('change', (e) => {
+        document.getElementById('otherSessionInput1').disabled = !e.target.checked;
+    });
+
+    document.getElementById('otherSession2').addEventListener('change', (e) => {
+        document.getElementById('otherSessionInput2').disabled = !e.target.checked;
+    });
+
     document.getElementById('songForm').addEventListener('submit', async (e) => {
         e.preventDefault();
+
+        // 체크된 세션 수집
+        const sessions = Array.from(document.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
+
+        // "그 외" 세션명 추가
+        const other1 = document.getElementById('otherSessionInput1').value;
+        if (other1) sessions.push(other1);
+
+        const other2 = document.getElementById('otherSessionInput2').value;
+        if (other2) sessions.push(other2);
+
+        // 본인 세션 선택 값 가져오기
+        const mySession = document.querySelector('input[name="mySession"]:checked')?.value || "미지정";
+        const userName = document.getElementById('userName').value;
 
         const song = {
             title: document.getElementById('title').value,
             artist: document.getElementById('artist').value,
             link: document.getElementById('link').value,
             description: document.getElementById('description').value,
-            session: []
+            session: sessions,
+            userName: userName,
+            mySession: mySession
         };
 
         // 1️⃣ LocalStorage에 저장
@@ -73,7 +132,9 @@
                     artist: song.artist,
                     link: song.link,
                     session: song.session,
-                    description: song.description
+                    description: song.description,
+                    userName: song.userName,
+                    mySession: song.mySession
                 })
             });
 
