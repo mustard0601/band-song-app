@@ -79,71 +79,44 @@
 </form>
 
 <script>
-    const form = document.getElementById('songForm');
-    const other1 = document.getElementById('other1');
-    const other2 = document.getElementById('other2');
-    const instrument1 = document.getElementById('instrument1');
-    const instrument2 = document.getElementById('instrument2');
-    const mainSessionSelect = document.getElementById('mainSession');
+  const form = document.getElementById('songForm');
 
-    const updateMainSessionOptions = () => {
-        mainSessionSelect.innerHTML = '<option value="" disabled selected>본인 세션을 선택하세요</option>';
-        document.querySelectorAll('input[name="session"]:checked').forEach(checkbox => {
-            let value = checkbox.value;
-            if (value === "그 외 1" && instrument1.value) value += ` (${instrument1.value})`;
-            if (value === "그 외 2" && instrument2.value) value += ` (${instrument2.value})`;
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
 
-            const option = document.createElement('option');
-            option.value = value;
-            option.text = value;
-            mainSessionSelect.appendChild(option);
-        });
+    const songData = {
+        title: document.getElementById('title').value,
+        artist: document.getElementById('artist').value,
+        link: document.getElementById('link').value,
+        description: document.getElementById('description').value,
+        registrant: document.getElementById('registrant').value,
+        generation: document.getElementById('generation').value,
+        mainSession: document.getElementById('mainSession').value,
+        sessions: JSON.stringify(Array.from(document.querySelectorAll('input[name="session"]:checked'))
+                        .map(input => input.value)),
+        other1: document.getElementById('instrument1').value,
+        other2: document.getElementById('instrument2').value
     };
 
-    other1.addEventListener('change', () => instrument1.style.display = other1.checked ? 'block' : 'none');
-    other2.addEventListener('change', () => instrument2.style.display = other2.checked ? 'block' : 'none');
-    document.querySelectorAll('input[name="session"]').forEach(checkbox => {
-        checkbox.addEventListener('change', updateMainSessionOptions);
-    });
+    const baseUrl = 'https://script.google.com/macros/s/AKfycbxh5jbjWVDMAneIxAa2l0e7ujlI_fJjTVX7zNKrG4PlK24TydWk53FPTVEIDFnfWLFVOA/exec';
+    const queryString = new URLSearchParams({
+      ...songData,
+      callback: 'handleResponse'
+    }).toString();
 
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
+    const script = document.createElement('script');
+    script.src = `${baseUrl}?${queryString}`;
+    document.body.appendChild(script);
+  });
 
-        const songData = {
-            title: form.title.value,
-            artist: form.artist.value,
-            link: form.link.value,
-            description: form.description.value,
-            registrant: form.registrant.value,
-            generation: form.generation.value,
-            mainSessionName: mainSessionSelect.value,
-            sessions: Array.from(document.querySelectorAll('input[name="session"]:checked'))
-                .map(input => input.value),
-            other1: instrument1.value,
-            other2: instrument2.value
-        };
-
-        try {
-            const response = await fetch('https://script.google.com/macros/s/AKfycbxh5jbjWVDMAneIxAa2l0e7ujlI_fJjTVX7zNKrG4PlK24TydWk53FPTVEIDFnfWLFVOA/exec', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(songData)
-            });
-
-            const data = await response.json();
-            if (data.status === 'success') {
-                alert('곡 등록 성공');
-                window.location.href = 'index.html';
-            } else {
-                alert('등록 실패: ' + data.message);
-            }
-        } catch (error) {
-            alert('네트워크 오류 또는 서버 오류 발생');
-            console.error(error);
-        }
-    });
+  function handleResponse(data) {
+    if (data.status === 'success') {
+      alert('곡 등록 성공');
+      window.location.href = 'index.html';
+    } else {
+      alert('등록 실패');
+    }
+  }
 </script>
 
 </body>
