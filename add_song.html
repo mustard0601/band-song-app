@@ -87,56 +87,47 @@
     const instrument2 = document.getElementById('instrument2');
     const mainSessionSelect = document.getElementById('mainSession');
 
+    // "그 외" 체크 시 악기명 입력란 표시
     other1.addEventListener('change', () => {
         instrument1.style.display = other1.checked ? 'block' : 'none';
+        updateMainSessionOptions();
     });
-
     other2.addEventListener('change', () => {
         instrument2.style.display = other2.checked ? 'block' : 'none';
+        updateMainSessionOptions();
     });
 
-    form.addEventListener('submit', (e) => {
-        e.preventDefault();
+    // 악기명 입력 시 드롭다운 업데이트
+    instrument1.addEventListener('input', updateMainSessionOptions);
+    instrument2.addEventListener('input', updateMainSessionOptions);
 
-        // ✅ songData 객체 정의
-        const songData = {
-            title: document.getElementById('title').value,
-            artist: document.getElementById('artist').value,
-            link: document.getElementById('link').value,
-            description: document.getElementById('description').value,
-            registrant: document.getElementById('registrant').value,
-            generation: document.getElementById('generation').value,
-            mainSessionName: mainSessionSelect.value,
-            sessions: Array.from(document.querySelectorAll('input[name="session"]:checked'))
-                            .map(input => input.value),
-            other1: instrument1.value,
-            other2: instrument2.value
-        };
+    // 체크박스가 변경될 때마다 실행
+    document.querySelectorAll('input[name="session"]').forEach(checkbox => {
+        checkbox.addEventListener('change', updateMainSessionOptions);
+    });
 
-        console.log("전송할 데이터:", songData);
+    // ✅ 드롭다운 업데이트 함수
+    function updateMainSessionOptions() {
+        mainSessionSelect.innerHTML = '<option value="" disabled selected>본인 세션을 선택하세요</option>';
+        
+        document.querySelectorAll('input[name="session"]:checked').forEach(checkedBox => {
+            let value = checkedBox.value;
 
-        // ✅ Vercel에 배포된 Proxy URL로 변경
-        fetch('https://https://google-script-proxy-eight.vercel.app//api', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(songData)
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                alert('곡 등록 성공');
-                window.location.href = 'index.html';
-            } else {
-                alert('등록 실패: ' + data.message);
+            if (value === "그 외 1" && instrument1.value) {
+                value += ` (${instrument1.value})`;
             }
-        })
-        .catch(error => {
-            alert('네트워크 오류 또는 서버 오류 발생');
-            console.error(error);
+            if (value === "그 외 2" && instrument2.value) {
+                value += ` (${instrument2.value})`;
+            }
+
+            const option = document.createElement('option');
+            option.value = value;
+            option.text = value;
+            mainSessionSelect.appendChild(option);
         });
-    });
+
+        console.log("업데이트된 드롭다운 목록:", mainSessionSelect.innerHTML); // 디버그
+    }
 </script>
 
 </body>
