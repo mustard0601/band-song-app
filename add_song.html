@@ -3,22 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Band Session App</title>
+    <title>곡 등록하기</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
         }
-        button.session-button {
-            margin: 2px;
-            padding: 5px 10px;
-            background-color: #6c757d;
-            color: white;
-            border: none;
-            border-radius: 5px;
-        }
-        button.session-button:hover {
-            background-color: #5a6268;
+        input, textarea {
+            display: block;
+            margin-bottom: 10px;
+            padding: 10px;
+            width: 100%;
+            max-width: 500px;
         }
         button {
             background-color: #4CAF50;
@@ -26,69 +22,71 @@
             padding: 10px 20px;
             border: none;
             cursor: pointer;
-            margin-bottom: 10px;
         }
         button:hover {
             background-color: #45a049;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-        }
-        th, td {
-            border: 1px solid black;
-            padding: 8px;
-            text-align: left;
-        }
-        th {
-            background-color: #f2f2f2;
         }
     </style>
 </head>
 <body>
 
-<h2>등록된 곡 목록</h2>
-<button onclick="window.location.href='add_song.html'">새로운 곡 등록하기</button>
-<table id="songTable">
-    <thead>
-        <tr>
-            <th>곡 제목</th>
-            <th>아티스트</th>
-            <th>유튜브 링크</th>
-            <th>세션 지원</th>
-            <th>비고</th>
-            <th>관리</th>
-        </tr>
-    </thead>
-    <tbody>
-    </tbody>
-</table>
+<h2>곡 등록하기</h2>
+
+<form id="songForm">
+    <input type="text" id="title" placeholder="곡 제목" required />
+    <input type="text" id="artist" placeholder="아티스트" required />
+    <input type="url" id="link" placeholder="유튜브 링크 (https:// 포함)" required />
+    <textarea id="description" placeholder="비고" rows="3"></textarea>
+
+    <button type="submit">등록하기</button>
+</form>
 
 <script>
-    const tableBody = document.querySelector('#songTable tbody');
+    const API_URL = "YOUR_GOOGLE_SCRIPT_DEPLOYMENT_URL";
 
-    // LocalStorage에서 불러와서 테이블에 추가
-    const songs = JSON.parse(localStorage.getItem('songs')) || [];
-    songs.forEach((song, index) => {
-        addSongToTable(song, index);
+    document.getElementById('songForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const song = {
+            title: document.getElementById('title').value,
+            artist: document.getElementById('artist').value,
+            link: document.getElementById('link').value,
+            description: document.getElementById('description').value,
+            session: []
+        };
+
+        // 1️⃣ LocalStorage에 저장
+        const songs = JSON.parse(localStorage.getItem('songs')) || [];
+        songs.push(song);
+        localStorage.setItem('songs', JSON.stringify(songs));
+
+        // 2️⃣ Google Sheet에 추가
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    action: 'add',
+                    title: song.title,
+                    artist: song.artist,
+                    link: song.link,
+                    session: song.session,
+                    description: song.description
+                })
+            });
+
+            if (!response.ok) {
+                alert('구글 시트 업데이트에 실패했습니다.');
+            } else {
+                alert('곡이 성공적으로 등록되었습니다.');
+                window.location.href = "index.html";
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
     });
-
-    function addSongToTable({ title, artist, description, link, session = [] }, index) {
-        const row = document.createElement('tr');
-        const sessionButtons = session.map(s => `<button class='session-button'>${s}</button>`).join(' ');
-
-        row.innerHTML = `
-            <td>${title}</td>
-            <td>${artist}</td>
-            <td><a href="${link}" target="_blank">링크</a></td>
-            <td style="display: flex; gap: 5px;">${sessionButtons}</td>
-            <td>${description}</td>
-            <td><button onclick="editSong(${index})">수정</button></td>
-        `;
-
-        tableBody.prepend(row);
-    }
 </script>
 
 </body>
